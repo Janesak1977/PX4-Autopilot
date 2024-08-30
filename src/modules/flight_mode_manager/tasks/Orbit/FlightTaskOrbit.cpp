@@ -334,11 +334,14 @@ void FlightTaskOrbit::_generate_circle_setpoints()
 
 	// xy velocity adjustment to stay on the radius distance
 	velocity_xy += (_orbit_radius - center_to_position.xy().norm()) * Vector2f(center_to_position).unit_or_zero();
-
+	PositionSmoothing::PositionSmoothingSetpoints out_setpoints;
 	_position_setpoint(0) = _position_setpoint(1) = NAN;
-	_velocity_setpoint.xy() = velocity_xy;
-	_acceleration_setpoint.xy() = -Vector2f(center_to_position.unit_or_zero()) * _orbit_velocity * _orbit_velocity /
-				      _orbit_radius;
+	_position_smoothing.generateSetpoints(_position, _position_setpoint, Vector3f(velocity_xy(0), velocity_xy(1), 0.f),
+					      _deltatime, false, out_setpoints);
+
+	_velocity_setpoint.xy() = out_setpoints.velocity.xy();
+	_position_setpoint = out_setpoints.position;
+	_acceleration_setpoint = out_setpoints.acceleration;
 }
 
 void FlightTaskOrbit::_generate_circle_yaw_setpoints()
